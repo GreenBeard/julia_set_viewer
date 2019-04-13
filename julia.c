@@ -22,7 +22,8 @@ unsigned int iterate(double complex seed, double complex c, unsigned int max_ite
 }
 
 double complex fuzzy_seed(double x, double y) {
-  return csqrt(x) + csqrt(y)*I;
+  /*return csqrt(x) + csqrt(y)*I;*/
+  return 0;
 }
 
 double complex fuzzy_c(double x, double y) {
@@ -89,38 +90,19 @@ struct rgb_pixel hsv_to_rgb(struct hsv_pixel pixel) {
   return rgb_pixel;
 }
 
-//int main(int argc, char** argv) {
-void test(void) {
-  printf("Attempting a 2D julia set...\n");
-  printf("Scale is the size of each pixel on the graph\n");
-  printf("Output width, height, function width, and max iterations? ");
-
-  unsigned int width;
-  unsigned int height;
-  double func_width;
-  unsigned int max_iters;
-
-  scanf("%u%u%lf%u", &width, &height, &func_width, &max_iters);
-
+void render_julia_rgb(unsigned char* data_out,
+    unsigned int width, unsigned int height,
+    double func_width, double x_mid, double y_mid,
+    unsigned int max_iters) {
   double half_width = width / 2.0;
   double half_height = height / 2.0;
   double scale = func_width / width;
 
-  FILE* file = fopen("./output.ppm", "w");
-  if (file == NULL) {
-    printf("Error opening file\n");
-    return;
-  }
-
-  struct rgb_pixel* image = malloc(sizeof(struct rgb_pixel) * width * height);
-  // TODO fix
-  assert(image != NULL);
-
   #pragma omp parallel for collapse(2)
-  for (unsigned int i = 0; i < width; ++i) {
-    for (unsigned int j = 0; j < height; ++j) {
-      double x = scale * (i - half_width);
-      double y = scale * (half_height - j);
+  for (unsigned int j = 0; j < height; ++j) {
+    for (unsigned int i = 0; i < width; ++i) {
+      double x = x_mid + scale * (i - half_width);
+      double y = y_mid + scale * (half_height - j);
       double complex seed = fuzzy_seed(x, y);
       double complex c = fuzzy_c(x, y);
       unsigned int iters = iterate(seed, c, max_iters);
@@ -130,23 +112,14 @@ void test(void) {
         pixel.s = 0;
         pixel.v = 0;
       } else {
-        pixel.h = fmod((((double) iters / (double) max_iters) * 360 + 180), 360);
+        pixel.h = fmod((((double) iters / (double) max_iters) * 360 + 120), 360);
         pixel.s = 1;
         pixel.v = 1;
       }
-      image[j*width + i] = hsv_to_rgb(pixel);
+      struct rgb_pixel rgb_pixel = hsv_to_rgb(pixel);
+      data_out[3*(j*width + i) + 0] = rgb_pixel.r;
+      data_out[3*(j*width + i) + 1] = rgb_pixel.g;
+      data_out[3*(j*width + i) + 2] = rgb_pixel.b;
     }
   }
-
-  fprintf(file, "P6 %u %u 255\n", width, height);
-  /* Output image as PPM */
-  for (unsigned int j = 0; j < height; ++j) {
-    for (unsigned int i = 0; i < width; ++i) {
-      struct rgb_pixel p = image[j*width + i];
-      fprintf(file, "%c%c%c", p.r, p.g, p.b);
-    }
-  }
-
-  free(image);
-  fclose(file);
 }

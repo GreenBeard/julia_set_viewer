@@ -1,13 +1,13 @@
 
 viewer: main.o julia.o
-	g++ main.o julia.o $(shell wx-config --libs) -lm -fopenmp
+	g++ main.o julia.o -o viewer $(shell wx-config --libs) -lm -fopenmp
 
 main.o: main.cpp
-	g++ -c -g main.cpp $(shell wx-config --cxxflags)
+	g++ -O2 -c -g main.cpp $(shell wx-config --cxxflags)
 
 julia.o: julia.c
-	gcc -c -g julia.c -lm -fopenmp
+	gcc -O2 -c -g julia.c -lm -fopenmp
 
 clean:
-	rm a.out
+	$(RM) julia.o main.o viewer
 
