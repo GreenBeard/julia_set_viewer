@@ -36,58 +36,77 @@ public:
     wxCoord width;
     wxCoord height;
     dc.GetSize(&width, &height);
+    width *= 2;
+    height *= 2;
     unsigned char* data = (unsigned char*) malloc(3 * sizeof(char) * width * height);
 
     render_julia_rgb(data, (unsigned int) width, (unsigned int) height, view_width, tmp_center_x, tmp_center_y, 100);
 
     /* wxImage will free data */
     wxImage image(width, height, data);
+    image.Rescale(width / 2, height / 2);
     render(&dc, &image);
   }
 
-   void mouse_wheel_event(wxMouseEvent& event) {
-     if (event.GetWheelAxis() == wxMOUSE_WHEEL_VERTICAL) {
-       double delta = (double) event.GetWheelRotation() / event.GetWheelDelta();
-       /* Todo make scroll at cursor position */
-       view_width *= pow(0.8, delta);
-       this->Refresh();
-     }
-   }
+  void mouse_wheel_event(wxMouseEvent& event) {
+    if (event.GetWheelAxis() == wxMOUSE_WHEEL_VERTICAL) {
+      wxCoord width;
+      wxCoord height;
+      GetSize(&width, &height);
+      wxCoord x = event.GetX();
+      wxCoord y = event.GetY();
 
-   wxCoord start_x;
-   wxCoord start_y;
-   bool mouse_down;
-   void mouse_down_event(wxMouseEvent& event) {
-     start_x = event.GetX();
-     start_y = event.GetY();
-     mouse_down = true;
-   }
-   void mouse_release_event(wxMouseEvent& event) {
-     int window_width;
-     GetSize(&window_width, NULL);
-     view_center_x += -view_width / window_width * (event.GetX() - start_x);
-     view_center_y += +view_width / window_width * (event.GetY() - start_y);
-     tmp_center_x = view_center_x;
-     tmp_center_y = view_center_y;
-     mouse_down = false;
-     this->Refresh();
-   }
-   void mouse_move_event(wxMouseEvent& event) {
-     if (mouse_down) {
-       int window_width;
-       GetSize(&window_width, NULL);
-       tmp_center_x = view_center_x - view_width / window_width * (event.GetX() - start_x);
-       tmp_center_y = view_center_y + view_width / window_width * (event.GetY() - start_y);
-       this->Refresh();
-     }
-   }
+      double delta = (double) event.GetWheelRotation() / event.GetWheelDelta();
+      /* Todo make scroll at cursor position */
+      double origin_view_width = view_width;
+      view_width *= pow(0.8, delta);
 
-   /*
-   void rightClick(wxMouseEvent& event);
-   void mouseLeftWindow(wxMouseEvent& event);
-   void keyPressed(wxKeyEvent& event);
-   void keyReleased(wxKeyEvent& event);
-   */
+      double x_correction = +(origin_view_width - view_width) / width * (x - width / 2);
+      double y_correction = -(origin_view_width - view_width) / width * (y - height / 2);
+
+      view_center_x += x_correction;
+      view_center_y += y_correction;
+      tmp_center_x = view_center_x;
+      tmp_center_y = view_center_y;
+
+      this->Refresh();
+    }
+  }
+
+  wxCoord start_x;
+  wxCoord start_y;
+  bool mouse_down;
+  void mouse_down_event(wxMouseEvent& event) {
+    start_x = event.GetX();
+    start_y = event.GetY();
+    mouse_down = true;
+  }
+  void mouse_release_event(wxMouseEvent& event) {
+    int window_width;
+    GetSize(&window_width, NULL);
+    view_center_x += -view_width / window_width * (event.GetX() - start_x);
+    view_center_y += +view_width / window_width * (event.GetY() - start_y);
+    tmp_center_x = view_center_x;
+    tmp_center_y = view_center_y;
+    mouse_down = false;
+    this->Refresh();
+  }
+  void mouse_move_event(wxMouseEvent& event) {
+    if (mouse_down) {
+      int window_width;
+      GetSize(&window_width, NULL);
+      tmp_center_x = view_center_x - view_width / window_width * (event.GetX() - start_x);
+      tmp_center_y = view_center_y + view_width / window_width * (event.GetY() - start_y);
+      this->Refresh();
+    }
+  }
+
+  /*
+  void rightClick(wxMouseEvent& event);
+  void mouseLeftWindow(wxMouseEvent& event);
+  void keyPressed(wxKeyEvent& event);
+  void keyReleased(wxKeyEvent& event);
+  */
 };
 
 class JuliaWxMainFrame : public wxFrame {
