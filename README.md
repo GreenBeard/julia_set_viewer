@@ -7,3 +7,5 @@ Written in wxWidgets for cross compatibility (Linux, Windows, and likely macOS
 are supported). The proper libraries for Windows need to be found by the
 person compiling. The script labeled for Windows is only designed for my
 machine.
+
+![screenshot](screenshot.png)
