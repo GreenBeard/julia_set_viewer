@@ -2,10 +2,13 @@
 extern "C" {
 #endif
 
-void render_julia_rgb(unsigned char* data_out,
+#include <complex.h>
+
+void render_set_rgb(unsigned char* data_out,
     unsigned int width, unsigned int height,
     double func_width, double x_mid, double y_mid,
-    unsigned int max_iters);
+    unsigned int max_iters,
+    bool mandelbrot, double complex julia_c);
 
 #ifdef __cplusplus
 }

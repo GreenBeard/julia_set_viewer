@@ -1,14 +1,17 @@
 #include <assert.h>
 #include <complex.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-unsigned int iterate(double complex seed, double complex c, unsigned int max_iters) {
+unsigned int julia_iterate(double complex z_0, double complex c, unsigned int max_iters) {
   unsigned int i;
-  double complex z = seed;
+  double complex z = z_0;
+
+  double escape_radius = fmax(cabs(c), 2.0);
   for (i = 0; i < max_iters; ++i) {
-    if (cabs(z) > 2.0) {
+    if (cabs(z) > escape_radius) {
       break;
     } else {
       z = z * z + c;
@@ -17,16 +20,15 @@ unsigned int iterate(double complex seed, double complex c, unsigned int max_ite
   if (i == max_iters) {
     return max_iters;
   } else {
-    return i + 1 - log(log2(cabs(z)));
+    return i;
   }
 }
 
-double complex fuzzy_seed(double x, double y) {
-  /*return csqrt(x) + csqrt(y)*I;*/
-  return 0;
+double complex mandelbrot_c(double x, double y) {
+  return x + y * I;
 }
 
-double complex fuzzy_c(double x, double y) {
+double complex julia_seed(double x, double y) {
   return x + y * I;
 }
 
@@ -90,10 +92,11 @@ struct rgb_pixel hsv_to_rgb(struct hsv_pixel pixel) {
   return rgb_pixel;
 }
 
-void render_julia_rgb(unsigned char* data_out,
+void render_set_rgb(unsigned char* data_out,
     unsigned int width, unsigned int height,
     double func_width, double x_mid, double y_mid,
-    unsigned int max_iters) {
+    unsigned int max_iters,
+    bool mandelbrot, double complex julia_c) {
   double half_width = width / 2.0;
   double half_height = height / 2.0;
   double scale = func_width / width;
@@ -103,9 +106,18 @@ void render_julia_rgb(unsigned char* data_out,
     for (unsigned int i = 0; i < width; ++i) {
       double x = x_mid + scale * (i - half_width);
       double y = y_mid + scale * (half_height - j);
-      double complex seed = fuzzy_seed(x, y);
-      double complex c = fuzzy_c(x, y);
-      unsigned int iters = iterate(seed, c, max_iters);
+
+      double complex seed;
+      double complex c;
+      if (mandelbrot) {
+        seed = 0;
+        c = mandelbrot_c(x, y);
+      } else {
+        seed = julia_seed(x, y);
+        c = julia_c;
+      }
+      unsigned int iters = julia_iterate(seed, c, max_iters);
+
       struct hsv_pixel pixel;
       if (iters == max_iters) {
         pixel.h = 0;
