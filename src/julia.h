@@ -2,7 +2,7 @@
 extern "C" {
 #endif
 
-#include <complex.h>
+#include "override/complex.h"
 
 void render_set_rgb(unsigned char* data_out,
     unsigned int width, unsigned int height,
